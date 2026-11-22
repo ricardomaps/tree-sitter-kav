@@ -5,7 +5,7 @@
   (case_arm)
   (guard_arm)
   (case_expression)
-  (guard_expresion)
+  (guard_expression)
   (if_expression)
   (val_binding)
   (datatype_declaration)
