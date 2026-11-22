@@ -1,0 +1,16 @@
+{
+  "name": "tree-sitter-kav",
+  "version": "0.1.0",
+  "description": "Kav grammar for tree-sitter",
+  "main": "bindings/node",
+  "keywords": ["parser", "tree-sitter", "kav"],
+  "license": "MIT",
+  "scripts": {
+    "generate": "tree-sitter generate",
+    "test": "tree-sitter test",
+    "parse": "tree-sitter parse"
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.27.0"
+  }
+}

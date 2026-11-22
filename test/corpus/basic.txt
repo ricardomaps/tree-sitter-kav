@@ -1,0 +1,211 @@
+================================================================================
+call on the same line
+================================================================================
+
+fn t() -> one {
+    f(1)
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_declaration
+    (identifier)
+    (parameters)
+    (type_identifier)
+    (block
+      (call_expression
+        (identifier)
+        (number)))))
+
+================================================================================
+paren on the next line is not a call
+================================================================================
+
+fn t() -> one {
+    val a = f
+    (1, 2)
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_declaration
+    (identifier)
+    (parameters)
+    (type_identifier)
+    (block
+      (val_binding
+        (identifier)
+        (identifier))
+      (tuple_expression
+        (number)
+        (number)))))
+
+================================================================================
+doc comment, linear datatype, consuming patterns
+================================================================================
+
+/% a doc comment %/
+pub linear datatype L[a: type, n: nat] {
+    | Nil : L[a, 0]
+    | [m: nat] Cons(a, L[a, m]) : L[a, m+1]
+}
+
+fn free[a: utype, n: nat](l: L[a, n]) -> one {
+    case l of {
+    | ~Nil => one
+    | ~Cons(_, rest) => free(rest)
+    }
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (doc_comment)
+  (datatype_declaration
+    (type_identifier)
+    (sort_parameters
+      (sort_parameter
+        (identifier)
+        (type_identifier))
+      (sort_parameter
+        (identifier)
+        (type_identifier)))
+    (constructor
+      (identifier)
+      (sort_application
+        (type_identifier)
+        (identifier)
+        (number)))
+    (constructor
+      (sort_parameters
+        (sort_parameter
+          (identifier)
+          (type_identifier)))
+      (identifier)
+      (type_identifier)
+      (sort_application
+        (type_identifier)
+        (identifier)
+        (identifier))
+      (sort_application
+        (type_identifier)
+        (identifier)
+        (binary_expression
+          (identifier)
+          (number)))))
+  (function_declaration
+    (identifier)
+    (sort_parameters
+      (sort_parameter
+        (identifier)
+        (type_identifier))
+      (sort_parameter
+        (identifier)
+        (type_identifier)))
+    (parameters
+      (parameter
+        (identifier)
+        (sort_application
+          (type_identifier)
+          (identifier)
+          (identifier))))
+    (type_identifier)
+    (block
+      (case_expression
+        (identifier)
+        (case_arm
+          (consuming_pattern
+            (identifier))
+          (identifier))
+        (case_arm
+          (consuming_pattern
+            (constructor_pattern
+              (identifier)
+              (wildcard)
+              (identifier)))
+          (call_expression
+            (identifier)
+            (identifier)))))))
+
+================================================================================
+guard, if, unary minus and precedence
+================================================================================
+
+fn sign(x: int) -> int {
+    guard {
+        | x < 0 => -1
+        | _ => if x == 0 then 0 else 1 + 2 * 3
+    }
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_declaration
+    (identifier)
+    (parameters
+      (parameter
+        (identifier)
+        (type_identifier)))
+    (type_identifier)
+    (block
+      (guard_expression
+        (guard_arm
+          (binary_expression
+            (identifier)
+            (number))
+          (unary_expression
+            (number)))
+        (guard_arm
+          (wildcard)
+          (if_expression
+            (binary_expression
+              (identifier)
+              (number))
+            (number)
+            (binary_expression
+              (number)
+              (binary_expression
+                (number)
+                (number)))))))))
+
+================================================================================
+use, sortdef, struct, newtype
+================================================================================
+
+use <std/io>
+use "x.kav" as x
+sortdef pos = [n: int | n > 0]
+struct P { x: int, y: int }
+newtype M = int
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (use_declaration
+    (system_path))
+  (use_declaration
+    (string)
+    (identifier))
+  (sortdef_declaration
+    (type_identifier)
+    (sort_parameters
+      (sort_parameter
+        (identifier)
+        (type_identifier)
+        (binary_expression
+          (identifier)
+          (number)))))
+  (struct_declaration
+    (type_identifier)
+    (parameter
+      (identifier)
+      (type_identifier))
+    (parameter
+      (identifier)
+      (type_identifier)))
+  (newtype_declaration
+    (type_identifier)
+    (type_identifier)))

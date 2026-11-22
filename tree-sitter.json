@@ -1,0 +1,18 @@
+{
+  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/config.schema.json",
+  "grammars": [
+    {
+      "name": "kav",
+      "camelcase": "Kav",
+      "scope": "source.kav",
+      "path": ".",
+      "file-types": ["kav"],
+      "highlights": "queries/highlights.scm"
+    }
+  ],
+  "metadata": {
+    "version": "0.1.0",
+    "license": "MIT",
+    "description": "Kav grammar for tree-sitter"
+  }
+}
