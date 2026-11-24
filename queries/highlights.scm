@@ -34,6 +34,7 @@
 
 [
   "pub"
+  "abstract"
   "linear"
 ] @keyword.storage.modifier
 
@@ -62,6 +63,7 @@
   "==" "!=" "<" ">" "<=" ">="
   "=" "=>" "->" "|"
   "~" "!"
+  "|>"
 ] @operator
 
 [ "(" ")" "[" "]" "{" "}" ] @punctuation.bracket

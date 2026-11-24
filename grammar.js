@@ -18,19 +18,12 @@ module.exports = grammar({
 
   word: ($) => $.identifier,
 
-  // Tokens produced by src/scanner.c. The language only treats `(` and `[`
-  // as the start of a call / sort application when they are on the same line
-  // as the name before them, which a context-free grammar can't express.
   externals: ($) => [$._call_lparen, $._call_lbrack],
 
   extras: ($) => [/\s/, $.line_comment, $.block_comment, $.doc_comment],
 
   rules: {
     source_file: ($) => repeat($._declaration),
-
-    // ---------------------------------------------------------------
-    // declarations
-    // ---------------------------------------------------------------
 
     _declaration: ($) =>
       choice(
@@ -69,6 +62,7 @@ module.exports = grammar({
     datatype_declaration: ($) =>
       seq(
         optional('pub'),
+        optional('abstract'),
         optional('linear'),
         'datatype',
         field('name', $._type_name_def),
@@ -90,6 +84,7 @@ module.exports = grammar({
     newtype_declaration: ($) =>
       seq(
         optional('pub'),
+        optional('abstract'),
         optional('linear'),
         'newtype',
         field('name', $._type_name_def),
@@ -107,8 +102,6 @@ module.exports = grammar({
         field('definition', $._type),
       ),
 
-    // `sortdef nat = [n: int | n >= 0]`. When the definition starts with `[`
-    // it is always a sort parameter list, never an existential type.
     sortdef_declaration: ($) =>
       seq(
         optional('pub'),
@@ -131,7 +124,6 @@ module.exports = grammar({
 
     _type_name_def: ($) => alias($.identifier, $.type_identifier),
 
-    // [a: type, n: nat | n > 0]
     sort_parameters: ($) => seq('[', commaSep1($.sort_parameter), ']'),
 
     sort_parameter: ($) =>
@@ -142,15 +134,10 @@ module.exports = grammar({
         optional(seq('|', field('condition', $._expression))),
       ),
 
-    // (x: int, y: !List[int, n])
     parameters: ($) => seq('(', commaSep($.parameter), ')'),
 
     parameter: ($) =>
       seq(field('name', $.identifier), ':', field('type', $._type)),
-
-    // ---------------------------------------------------------------
-    // types
-    // ---------------------------------------------------------------
 
     _type: ($) => choice($.existential_type, $._simple_type),
 
@@ -170,14 +157,11 @@ module.exports = grammar({
         alias($.scoped_identifier, $.scoped_type_identifier),
       ),
 
-    // [m: nat] List[a, m]
     existential_type: ($) =>
       seq($.sort_parameters, field('body', $._type)),
 
-    // !List[a, n]
     borrow_type: ($) => seq('!', field('body', $._type)),
 
-    // fn(int, !List[int, n]) -> int
     function_type: ($) =>
       seq(
         'fn',
@@ -191,10 +175,6 @@ module.exports = grammar({
     tuple_type: ($) => seq('(', $._type, ',', commaSep1($._type), ')'),
 
     parenthesized_type: ($) => seq('(', $._type, ')'),
-
-    // ---------------------------------------------------------------
-    // expressions
-    // ---------------------------------------------------------------
 
     _expression: ($) =>
       choice(
@@ -231,7 +211,6 @@ module.exports = grammar({
         field('alternative', $._expression),
       ),
 
-    // guard { | cond => expr | _ => expr }
     guard_expression: ($) =>
       seq('guard', '{', repeat1($.guard_arm), '}'),
 
@@ -243,7 +222,6 @@ module.exports = grammar({
         field('body', $._expression),
       ),
 
-    // case x of { | pat => expr }
     case_expression: ($) =>
       seq(
         'case',
@@ -266,7 +244,7 @@ module.exports = grammar({
       choice(
         ...[
           [PREC.compare, choice('==', '!=', '<', '>', '<=', '>=')],
-          [PREC.additive, choice('+', '-')],
+          [PREC.additive, choice('+', '-', '|>')],
           [PREC.multiplicative, choice('*', '/', '%')],
         ].map(([precedence, operator]) =>
           prec.left(
@@ -285,7 +263,6 @@ module.exports = grammar({
     unary_expression: ($) =>
       prec(PREC.unary, seq(field('operator', '-'), field('operand', $._unary))),
 
-    // f(x, 1)
     call_expression: ($) =>
       seq(
         field('function', $._name),
@@ -294,7 +271,6 @@ module.exports = grammar({
         ')',
       ),
 
-    // List[a, n + 1]
     sort_application: ($) =>
       seq(
         field('name', $._type_name),
@@ -308,7 +284,6 @@ module.exports = grammar({
     tuple_expression: ($) =>
       seq('(', $._expression, ',', commaSep1($._expression), ')'),
 
-    // { val x = 1  val y: int = 2  x + y }
     block: ($) =>
       seq('{', repeat($.val_binding), field('result', $._expression), '}'),
 
@@ -321,13 +296,8 @@ module.exports = grammar({
         field('value', $._expression),
       ),
 
-    // ---------------------------------------------------------------
-    // patterns
-    // ---------------------------------------------------------------
-
     _pattern: ($) => choice($.consuming_pattern, $._base_pattern),
 
-    // ~Cons(x, xs): matching consumes the linear value
     consuming_pattern: ($) => seq('~', $._base_pattern),
 
     _base_pattern: ($) =>
@@ -353,19 +323,13 @@ module.exports = grammar({
 
     parenthesized_pattern: ($) => seq('(', $._pattern, ')'),
 
-    // ---------------------------------------------------------------
-    // names and tokens
-    // ---------------------------------------------------------------
-
     _name: ($) => choice($.identifier, $.scoped_identifier),
 
-    // maybe::None
     scoped_identifier: ($) =>
       seq(field('namespace', $.identifier), '::', field('name', $.identifier)),
 
     identifier: (_) => /[a-zA-Z_][a-zA-Z_0-9]*/,
 
-    // `_` is a hole in expressions and a wildcard in patterns
     wildcard: (_) => '_',
 
     number: (_) => /[0-9]+/,
@@ -373,7 +337,6 @@ module.exports = grammar({
     string: (_) =>
       token(seq('"', repeat(choice(/[^"\\\n]/, /\\[^\n]/)), '"')),
 
-    // only lexed directly after `use`: use <std/list>
     system_path: (_) => /<[^>\n]*>/,
 
     line_comment: (_) => token(seq('//', /[^\n]*/)),
@@ -381,7 +344,6 @@ module.exports = grammar({
     block_comment: (_) =>
       token(seq('/*', repeat(choice(/[^*]/, /\*+[^*\/]/)), /\*+\//)),
 
-    // /% doc comment %/
     doc_comment: (_) =>
       token(seq('/%', repeat(choice(/[^%]/, /%+[^%\/]/)), /%+\//)),
   },
