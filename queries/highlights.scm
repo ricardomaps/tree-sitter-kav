@@ -36,6 +36,7 @@
   "pub"
   "abstract"
   "linear"
+  "extern"
 ] @keyword.storage.modifier
 
 [

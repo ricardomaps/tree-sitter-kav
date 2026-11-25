@@ -39,6 +39,7 @@ module.exports = grammar({
     function_declaration: ($) =>
       seq(
         optional('pub'),
+        optional('extern'),
         'fn',
         field('name', $.identifier),
         optional(field('sort_parameters', $.sort_parameters)),
@@ -182,6 +183,7 @@ module.exports = grammar({
         $.guard_expression,
         $.case_expression,
         $._binary,
+        $.anonymous_function,
       ),
 
     _binary: ($) => choice($.binary_expression, $._unary),
@@ -286,6 +288,16 @@ module.exports = grammar({
 
     block: ($) =>
       seq('{', repeat($.val_binding), field('result', $._expression), '}'),
+
+    anonymous_function: ($) => 
+      seq(
+        'fn',
+        optional(field('sort_parameters', $.sort_parameters)),
+        field('parameters', $.parameters),
+        '->',
+        field('return_type', $._type),
+        field('body', $.block),
+      ),
 
     val_binding: ($) =>
       seq(
