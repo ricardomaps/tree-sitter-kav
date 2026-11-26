@@ -2,10 +2,12 @@
 // @ts-check
 
 const PREC = {
-  compare: 1,
-  additive: 2,
-  multiplicative: 3,
-  unary: 4,
+  or: 1,
+  and: 2,
+  compare: 3,
+  additive: 4,
+  multiplicative: 5,
+  unary: 6,
 };
 
 /** @param {RuleOrLiteral} rule */
@@ -245,6 +247,8 @@ module.exports = grammar({
     binary_expression: ($) =>
       choice(
         ...[
+          [PREC.or, '||'], 
+          [PREC.and, '&&'], 
           [PREC.compare, choice('==', '!=', '<', '>', '<=', '>=')],
           [PREC.additive, choice('+', '-', '|>')],
           [PREC.multiplicative, choice('*', '/', '%')],
@@ -263,7 +267,7 @@ module.exports = grammar({
       ),
 
     unary_expression: ($) =>
-      prec(PREC.unary, seq(field('operator', '-'), field('operand', $._unary))),
+      prec(PREC.unary, seq(field('operator', choice('-', '!')), field('operand', $._unary))),
 
     call_expression: ($) =>
       seq(
