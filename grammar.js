@@ -48,7 +48,7 @@ module.exports = grammar({
         field('parameters', $.parameters),
         '->',
         field('return_type', $._type),
-        field('body', $.block),
+        field('body', optional($.block)),
       ),
 
     struct_declaration: ($) =>
