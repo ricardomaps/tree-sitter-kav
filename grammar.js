@@ -250,8 +250,8 @@ module.exports = grammar({
           [PREC.or, '||'], 
           [PREC.and, '&&'], 
           [PREC.compare, choice('==', '!=', '<', '>', '<=', '>=')],
-          [PREC.additive, choice('+', '-', '|>')],
-          [PREC.multiplicative, choice('*', '/', '%')],
+          [PREC.additive, choice('+', '-', '|>', '|', '^')],
+          [PREC.multiplicative, choice('*', '/', '%', '&', '<<', '>>')],
         ].map(([precedence, operator]) =>
           prec.left(
             // @ts-ignore
@@ -267,7 +267,7 @@ module.exports = grammar({
       ),
 
     unary_expression: ($) =>
-      prec(PREC.unary, seq(field('operator', choice('-', '!')), field('operand', $._unary))),
+      prec(PREC.unary, seq(field('operator', choice('-', '!', '~')), field('operand', $._unary))),
 
     call_expression: ($) =>
       seq(
